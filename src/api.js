@@ -69,3 +69,18 @@ export async function adminLogin(password) {
   const data = await res.json()
   return data.token
 }
+// Deletes multiple bills at once (and their photos). Admin only.
+// Matches: @app.post("/bills/bulk-delete")
+export async function bulkDeleteBills(token, ids) {
+  const res = await fetch(`${API_URL}/bills/bulk-delete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ids }),
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Bulk delete failed: ${res.status}`)
+  return res.json()
+}

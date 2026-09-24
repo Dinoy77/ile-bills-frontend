@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchBills } from '../api.js'
+import { fetchBills, bulkDeleteBills } from '../api.js'
 import BillCard from '../components/BillCard.jsx'
 import AdminLogin from '../components/AdminLogin.jsx'
 
@@ -9,8 +9,11 @@ export default function DashboardPage() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [bills, setBills] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
-  const [status, setStatus] = useState('loading') // loading | ready | error
+  const [status, setStatus] = useState('loading')
   const [openGroups, setOpenGroups] = useState({})
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   useEffect(() => {
     if (token) load(token)
@@ -47,6 +50,49 @@ export default function DashboardPage() {
     setOpenGroups((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
+  function toggleSelectMode() {
+    setSelectMode((prev) => !prev)
+    setSelectedIds(new Set())
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAllInGroup(groupBills) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      groupBills.forEach((b) => next.add(b.id))
+      return next
+    })
+  }
+
+  async function handleBulkDelete() {
+    if (selectedIds.size === 0) return
+    const confirmed = window.confirm(
+      `Delete ${selectedIds.size} selected bill(s)? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setBulkDeleting(true)
+    try {
+      await bulkDeleteBills(token, Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setSelectMode(false)
+      await load(token)
+    } catch (err) {
+      console.error(err)
+      alert('Could not delete selected bills.')
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
   if (!token) {
     return <AdminLogin onSuccess={handleLoginSuccess} />
   }
@@ -65,8 +111,6 @@ export default function DashboardPage() {
     })
     .reduce((sum, b) => sum + (b.bill_amount || 0), 0)
 
-  // Group bills by employee name, ignoring case/spacing so "deric" and "Deric"
-  // land in the same folder. The first-seen spelling is used as the display name.
   const groups = {}
   for (const bill of filtered) {
     const raw = (bill.employee_name || 'Unknown').trim()
@@ -85,12 +129,35 @@ export default function DashboardPage() {
       <div className="dashboard-header">
         <h1>All bills ({filtered.length})</h1>
         <div className="dashboard-actions">
-          <button className="btn-refresh" onClick={() => load(token)}>Refresh</button>
-          <button className="btn-refresh" onClick={handleLogout}>Log out</button>
+          {!selectMode && (
+            <>
+              <button className="btn-refresh" onClick={() => load(token)}>Refresh</button>
+              <button className="btn-refresh" onClick={toggleSelectMode}>Select</button>
+              <button className="btn-refresh" onClick={handleLogout}>Log out</button>
+            </>
+          )}
         </div>
       </div>
 
-      {status === 'ready' && bills.length > 0 && (
+      {selectMode && (
+        <div className="bulk-actions-bar">
+          <span>{selectedIds.size} selected</span>
+          <div className="bulk-actions-buttons">
+            <button
+              className="btn-icon-text danger"
+              onClick={handleBulkDelete}
+              disabled={selectedIds.size === 0 || bulkDeleting}
+            >
+              {bulkDeleting ? 'Deleting...' : `Delete selected (${selectedIds.size})`}
+            </button>
+            <button className="btn-icon-text" onClick={toggleSelectMode} disabled={bulkDeleting}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {status === 'ready' && bills.length > 0 && !selectMode && (
         <div className="stats-row">
           <div className="stat-card">
             <div className="stat-label">Total bills</div>
@@ -107,20 +174,22 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <input
-        type="text"
-        placeholder="Search by employee name..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="search-input"
-      />
+      {!selectMode && (
+        <input
+          type="text"
+          placeholder="Search by employee name..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="search-input"
+        />
+      )}
 
       {status === 'loading' && <p className="msg">Loading bills...</p>}
       {status === 'error' && <p className="msg error">Couldn't reach the backend. Is it running?</p>}
 
       {status === 'ready' && groupKeys.map((key) => {
         const group = groups[key]
-        const isOpen = !!openGroups[key]
+        const isOpen = !!openGroups[key] || selectMode
         const groupTotal = group.bills.reduce((sum, b) => sum + (b.bill_amount || 0), 0)
         return (
           <div className="employee-group" key={key}>
@@ -131,12 +200,28 @@ export default function DashboardPage() {
               </span>
               <span className="employee-group-meta">
                 {group.bills.length} bill{group.bills.length !== 1 ? 's' : ''} · ₹{groupTotal.toLocaleString('en-IN')}
+                {selectMode && (
+                  <a
+                    className="select-all-link"
+                    onClick={(e) => { e.stopPropagation(); selectAllInGroup(group.bills) }}
+                  >
+                    Select all
+                  </a>
+                )}
               </span>
             </button>
             {isOpen && (
               <div className="bill-grid">
                 {group.bills.map((bill) => (
-                  <BillCard key={bill.id} bill={bill} token={token} onChanged={() => load(token)} />
+                  <BillCard
+                    key={bill.id}
+                    bill={bill}
+                    token={token}
+                    onChanged={() => load(token)}
+                    selectMode={selectMode}
+                    selected={selectedIds.has(bill.id)}
+                    onToggleSelect={toggleSelect}
+                  />
                 ))}
               </div>
             )}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { updateBill, deleteBill } from '../api.js'
 
-export default function BillCard({ bill, token, onChanged }) {
+export default function BillCard({ bill, token, onChanged, selectMode, selected, onToggleSelect }) {
   const [isEditing, setIsEditing] = useState(false)
   const [name, setName] = useState(bill.employee_name)
   const [amount, setAmount] = useState(bill.bill_amount ?? '')
@@ -47,13 +47,38 @@ export default function BillCard({ bill, token, onChanged }) {
     }
   }
 
+  function handleCardClick() {
+    if (selectMode) {
+      onToggleSelect(bill.id)
+    }
+  }
+
   return (
-    <div className="bill-card">
-      <a href={bill.photo_url} target="_blank" rel="noreferrer">
+    <div
+      className={`bill-card${selectMode ? ' bill-card-selectable' : ''}${selected ? ' bill-card-selected' : ''}`}
+      onClick={handleCardClick}
+    >
+      {selectMode && (
+        <div className="bill-select-checkbox">
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={() => onToggleSelect(bill.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      <a
+        href={bill.photo_url}
+        target="_blank"
+        rel="noreferrer"
+        onClick={(e) => { if (selectMode) e.preventDefault() }}
+      >
         <img src={bill.photo_url} alt={`Bill by ${bill.employee_name}`} />
       </a>
 
-      {isEditing ? (
+      {isEditing && !selectMode ? (
         <div className="bill-info bill-edit">
           <input
             type="text"
@@ -85,21 +110,23 @@ export default function BillCard({ bill, token, onChanged }) {
           {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
           <span className="bill-date">{date}</span>
 
-          {confirmingDelete ? (
-            <div className="bill-edit-actions">
-              <span className="bill-edit-error">Delete this bill?</span>
-              <button className="btn-icon-text danger" onClick={handleDelete} disabled={saving}>
-                {saving ? 'Deleting...' : 'Yes, delete'}
-              </button>
-              <button className="btn-icon-text" onClick={() => setConfirmingDelete(false)} disabled={saving}>
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div className="bill-card-actions">
-              <button className="btn-icon-text" onClick={() => setIsEditing(true)}>Edit</button>
-              <button className="btn-icon-text danger" onClick={() => setConfirmingDelete(true)}>Delete</button>
-            </div>
+          {!selectMode && (
+            confirmingDelete ? (
+              <div className="bill-edit-actions">
+                <span className="bill-edit-error">Delete this bill?</span>
+                <button className="btn-icon-text danger" onClick={handleDelete} disabled={saving}>
+                  {saving ? 'Deleting...' : 'Yes, delete'}
+                </button>
+                <button className="btn-icon-text" onClick={() => setConfirmingDelete(false)} disabled={saving}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="bill-card-actions">
+                <button className="btn-icon-text" onClick={() => setIsEditing(true)}>Edit</button>
+                <button className="btn-icon-text danger" onClick={() => setConfirmingDelete(true)}>Delete</button>
+              </div>
+            )
           )}
         </div>
       )}
