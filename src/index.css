@@ -623,3 +623,50 @@ h1 {
   cursor: pointer;
   text-decoration: underline;
 }
+
+.uploading-as {
+  font-size: 0.9rem;
+  color: var(--brand-dark);
+  margin-bottom: 16px;
+}
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--brand);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: inherit;
+}
+.employee-form {
+  background: var(--brand-light);
+  border: 1.5px solid var(--brand);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.employee-form h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+.employee-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.employee-form-row input {
+  flex: 1 1 180px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+.employee-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+.employee-table th, .employee-table td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}

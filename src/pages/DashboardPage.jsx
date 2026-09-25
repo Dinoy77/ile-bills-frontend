@@ -35,15 +35,17 @@ export default function DashboardPage() {
     }
   }
 
-  function handleLoginSuccess(newToken) {
+    function handleLoginSuccess(newToken) {
     localStorage.setItem(TOKEN_KEY, newToken)
     setToken(newToken)
+    window.dispatchEvent(new Event('authchange'))
   }
 
-  function handleLogout() {
+    function handleLogout() {
     localStorage.removeItem(TOKEN_KEY)
     setToken(null)
     setBills([])
+    window.dispatchEvent(new Event('authchange'))
   }
 
   function toggleGroup(key) {

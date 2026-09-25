@@ -107,6 +107,7 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
       ) : (
         <div className="bill-info">
           <strong>{bill.employee_name}</strong>
+          {bill.customer_name && <span>Customer: {bill.customer_name}</span>}
           {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
           <span className="bill-date">{date}</span>
 

@@ -1,13 +1,36 @@
 import { useState, useRef } from 'react'
 import { uploadBill } from '../api.js'
+import EmployeeLogin from '../components/EmployeeLogin.jsx'
+
+const TOKEN_KEY = 'tile_bills_employee_token'
+const NAME_KEY = 'tile_bills_employee_name'
 
 export default function UploadPage() {
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [employeeName, setEmployeeName] = useState(() => localStorage.getItem(NAME_KEY) || '')
+
   const [preview, setPreview] = useState(null)
   const [file, setFile] = useState(null)
-  const [employeeName, setEmployeeName] = useState('')
+  const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
-  const [status, setStatus] = useState('idle') // idle | uploading | success | error
+  const [status, setStatus] = useState('idle')
   const fileInputRef = useRef(null)
+
+  function handleLoginSuccess(newToken, name) {
+    localStorage.setItem(TOKEN_KEY, newToken)
+    localStorage.setItem(NAME_KEY, name)
+    setToken(newToken)
+    setEmployeeName(name)
+    window.dispatchEvent(new Event('authchange'))
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(NAME_KEY)
+    setToken(null)
+    setEmployeeName('')
+    window.dispatchEvent(new Event('authchange'))
+  }
 
   const handleFileSelect = (e) => {
     const selected = e.target.files[0]
@@ -18,15 +41,16 @@ export default function UploadPage() {
   }
 
   const handleUpload = async () => {
-    if (!file || !employeeName.trim()) {
-      alert('Please enter your name and take a photo first.')
+    if (!file || !customerName.trim()) {
+      alert('Please enter the customer/bill name and take a photo first.')
       return
     }
 
     setStatus('uploading')
     try {
       await uploadBill({
-        employeeName: employeeName.trim(),
+        token,
+        customerName: customerName.trim(),
         billAmount: billAmount || null,
         photoFile: file,
       })
@@ -34,26 +58,39 @@ export default function UploadPage() {
       setStatus('success')
       setFile(null)
       setPreview(null)
+      setCustomerName('')
       setBillAmount('')
       if (fileInputRef.current) fileInputRef.current.value = ''
     } catch (err) {
       console.error(err)
-      setStatus('error')
+      if (err.message === 'UNAUTHORIZED') {
+        handleLogout()
+      } else {
+        setStatus('error')
+      }
     }
+  }
+
+  if (!token) {
+    return <EmployeeLogin onSuccess={handleLoginSuccess} />
   }
 
   return (
     <div className="upload-page">
       <div className="upload-card">
         <h1>Upload a bill</h1>
+        <p className="uploading-as">
+          Uploading as <strong>{employeeName}</strong> ·{' '}
+          <button type="button" className="link-btn" onClick={handleLogout}>Not you? Log out</button>
+        </p>
 
         <label className="field">
-          Your name
+          Customer / bill name
           <input
             type="text"
-            value={employeeName}
-            onChange={(e) => setEmployeeName(e.target.value)}
-            placeholder="e.g. Ramesh Kumar"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="e.g. Sharma Tiles Showroom"
           />
         </label>
 
