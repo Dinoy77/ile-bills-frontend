@@ -31,7 +31,8 @@ export default function MyBillsPage() {
     }
   }
 
-  function handleLoginSuccess(newToken, name) {
+    function handleLoginSuccess(newToken, name) {
+    localStorage.removeItem('tile_bills_admin_token')
     localStorage.setItem(TOKEN_KEY, newToken)
     localStorage.setItem(NAME_KEY, name)
     setToken(newToken)

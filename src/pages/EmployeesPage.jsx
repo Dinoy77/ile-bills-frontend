@@ -36,7 +36,9 @@ export default function EmployeesPage() {
     }
   }
 
-  function handleLoginSuccess(newToken) {
+   function handleLoginSuccess(newToken) {
+    localStorage.removeItem('tile_bills_employee_token')
+    localStorage.removeItem('tile_bills_employee_name')
     localStorage.setItem(TOKEN_KEY, newToken)
     setToken(newToken)
     window.dispatchEvent(new Event('authchange'))
