@@ -616,6 +616,13 @@ h1 {
   gap: 8px;
 }
 
+.bill-card-actions, .bill-edit-actions {
+  flex-wrap: wrap;
+}
+.bill-card-actions button, .bill-edit-actions button {
+  white-space: nowrap;
+}
+
 .select-all-link {
   margin-left: 10px;
   color: var(--brand);
