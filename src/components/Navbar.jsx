@@ -29,6 +29,7 @@ export default function Navbar() {
           <>
             <Link to="/dashboard">Dashboard</Link>
             <Link to="/employees">Employees</Link>
+            <Link to="/trash">Trash</Link>
           </>
         )}
         {!isAdmin && isEmployee && (

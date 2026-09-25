@@ -175,3 +175,31 @@ export async function resetEmployeePassword(token, employeeId, newPassword) {
   }
   return res.json()
 }
+export async function fetchTrash(token) {
+  const res = await fetch(`${API_URL}/admin/trash`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Failed to load trash: ${res.status}`)
+  return res.json()
+}
+
+export async function restoreBill(token, billId) {
+  const res = await fetch(`${API_URL}/admin/trash/${billId}/restore`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Restore failed: ${res.status}`)
+  return res.json()
+}
+
+export async function permanentlyDeleteBill(token, billId) {
+  const res = await fetch(`${API_URL}/admin/trash/${billId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Permanent delete failed: ${res.status}`)
+  return res.json()
+}

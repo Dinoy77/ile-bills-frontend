@@ -4,6 +4,7 @@ import UploadPage from './pages/UploadPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import MyBillsPage from './pages/MyBillsPage.jsx'
 import EmployeesPage from './pages/EmployeesPage.jsx'
+import TrashPage from './pages/TrashPage.jsx'
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="/my-bills" element={<MyBillsPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/employees" element={<EmployeesPage />} />
+          <Route path="/trash" element={<TrashPage />} />
         </Routes>
       </div>
     </BrowserRouter>
