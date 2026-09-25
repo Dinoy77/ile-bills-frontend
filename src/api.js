@@ -159,3 +159,19 @@ export async function deleteEmployee(token, employeeId) {
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
   return res.json()
 }
+export async function resetEmployeePassword(token, employeeId, newPassword) {
+  const res = await fetch(`${API_URL}/admin/employees/${employeeId}/reset-password`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ new_password: newPassword }),
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.detail || `Failed to reset password: ${res.status}`)
+  }
+  return res.json()
+}

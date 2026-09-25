@@ -10,6 +10,7 @@ export default function MyBillsPage() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [bills, setBills] = useState([])
   const [status, setStatus] = useState('loading')
+  const totalAmount = bills.reduce((sum, b) => sum + (b.bill_amount || 0), 0)
 
   useEffect(() => {
     if (token) load()
@@ -31,7 +32,7 @@ export default function MyBillsPage() {
     }
   }
 
-    function handleLoginSuccess(newToken, name) {
+  function handleLoginSuccess(newToken, name) {
     localStorage.removeItem('tile_bills_admin_token')
     localStorage.setItem(TOKEN_KEY, newToken)
     localStorage.setItem(NAME_KEY, name)
@@ -60,6 +61,20 @@ export default function MyBillsPage() {
           <button className="btn-refresh" onClick={handleLogout}>Log out</button>
         </div>
       </div>
+
+      {status === 'ready' && bills.length > 0 && (
+        <div className="stats-row">
+          <div className="stat-card">
+            <div className="stat-label">Total bills</div>
+            <div className="stat-value">{bills.length}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Total amount</div>
+            <div className="stat-value">₹{totalAmount.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+      )}
+
 
       {status === 'loading' && <p className="msg">Loading bills...</p>}
       {status === 'error' && <p className="msg error">Couldn't reach the backend. Is it running?</p>}
