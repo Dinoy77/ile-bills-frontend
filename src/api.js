@@ -1,13 +1,24 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-export async function uploadBill({ token, customerName, billAmount, paymentMethod, photoSource, photoFile }) {
+export async function uploadBill({ token, customerName, billAmount, paymentMethod, photos }) {
   const formData = new FormData()
   formData.append('customer_name', customerName)
   if (billAmount) formData.append('bill_amount', billAmount)
   formData.append('payment_method', paymentMethod)
-  formData.append('photo_source', photoSource)
-  formData.append('photo', photoFile)
-  
+
+  // photos is an array of 1 to 3 items: { file, source }
+  formData.append('photo_source', photos[0].source)
+  formData.append('photo', photos[0].file)
+
+  if (photos[1]) {
+    formData.append('photo_source_2', photos[1].source)
+    formData.append('photo2', photos[1].file)
+  }
+
+  if (photos[2]) {
+    formData.append('photo_source_3', photos[2].source)
+    formData.append('photo3', photos[2].file)
+  }
 
   const res = await fetch(`${API_URL}/bills`, {
     method: 'POST',

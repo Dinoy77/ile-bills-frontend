@@ -4,14 +4,13 @@ import EmployeeLogin from '../components/EmployeeLogin.jsx'
 
 const TOKEN_KEY = 'tile_bills_employee_token'
 const NAME_KEY = 'tile_bills_employee_name'
+const MAX_PHOTOS = 3
 
 export default function UploadPage() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [employeeName, setEmployeeName] = useState(() => localStorage.getItem(NAME_KEY) || '')
 
-  const [preview, setPreview] = useState(null)
-  const [file, setFile] = useState(null)
-  const [photoSource, setPhotoSource] = useState('camera')
+  const [photos, setPhotos] = useState([]) // { file, preview, source }
   const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
@@ -36,20 +35,40 @@ export default function UploadPage() {
     window.dispatchEvent(new Event('authchange'))
   }
 
-  function selectFile(selected, source) {
+  function addPhoto(selected, source) {
     if (!selected) return
-    setFile(selected)
-    setPhotoSource(source)
-    setPreview(URL.createObjectURL(selected))
+    setPhotos((prev) => {
+      if (prev.length >= MAX_PHOTOS) return prev
+      return [...prev, { file: selected, preview: URL.createObjectURL(selected), source }]
+    })
     setStatus('idle')
   }
 
-  const handleCameraSelect = (e) => selectFile(e.target.files[0], 'camera')
-  const handleGallerySelect = (e) => selectFile(e.target.files[0], 'gallery')
+  const handleCameraSelect = (e) => {
+    addPhoto(e.target.files[0], 'camera')
+    e.target.value = ''
+  }
+  const handleGallerySelect = (e) => {
+    addPhoto(e.target.files[0], 'gallery')
+    e.target.value = ''
+  }
+
+  function removePhoto(index) {
+    setPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function resetForm() {
+    setPhotos([])
+    setCustomerName('')
+    setBillAmount('')
+    setPaymentMethod('')
+    if (cameraInputRef.current) cameraInputRef.current.value = ''
+    if (galleryInputRef.current) galleryInputRef.current.value = ''
+  }
 
   const handleUpload = async () => {
-    if (!file || !customerName.trim()) {
-      alert('Please enter the customer/bill name and take a photo first.')
+    if (photos.length === 0 || !customerName.trim()) {
+      alert('Please enter the customer/bill name and add at least one photo first.')
       return
     }
     if (!paymentMethod) {
@@ -64,19 +83,11 @@ export default function UploadPage() {
         customerName: customerName.trim(),
         billAmount: billAmount || null,
         paymentMethod,
-        photoSource,
-        photoFile: file,
+        photos,
       })
 
       setStatus('success')
-      setFile(null)
-      setPreview(null)
-      setPhotoSource('camera')
-      setCustomerName('')
-      setBillAmount('')
-      setPaymentMethod('')
-      if (cameraInputRef.current) cameraInputRef.current.value = ''
-      if (galleryInputRef.current) galleryInputRef.current.value = ''
+      resetForm()
     } catch (err) {
       console.error(err)
       if (err.message === 'UNAUTHORIZED') {
@@ -90,6 +101,8 @@ export default function UploadPage() {
   if (!token) {
     return <EmployeeLogin onSuccess={handleLoginSuccess} />
   }
+
+  const canAddMore = photos.length < MAX_PHOTOS
 
   return (
     <div className="upload-page">
@@ -131,10 +144,17 @@ export default function UploadPage() {
           </select>
         </label>
 
-        {preview && (
-          <div className="preview">
-            <img src={preview} alt="Bill preview" />
-            <p className="uploading-as">Source: <strong>{photoSource === 'gallery' ? 'Gallery' : 'Camera'}</strong></p>
+        {photos.length > 0 && (
+          <div className="preview-grid">
+            {photos.map((p, i) => (
+              <div className="preview" key={i}>
+                <img src={p.preview} alt={`Bill photo ${i + 1}`} />
+                <p className="uploading-as">
+                  {p.source === 'gallery' ? 'Gallery' : 'Camera'} ·{' '}
+                  <button type="button" className="link-btn" onClick={() => removePhoto(i)}>Remove</button>
+                </p>
+              </div>
+            ))}
           </div>
         )}
 
@@ -156,17 +176,24 @@ export default function UploadPage() {
           id="gallery-input"
         />
 
-        <label htmlFor="camera-input" className="btn btn-secondary">
-          {preview ? 'Retake photo' : 'Take photo'}
-        </label>
-        <label htmlFor="gallery-input" className="btn btn-secondary">
-          Choose from gallery
-        </label>
+        {canAddMore && (
+          <>
+            <label htmlFor="camera-input" className="btn btn-secondary">
+              {photos.length === 0 ? 'Take photo' : 'Add another photo (camera)'}
+            </label>
+            <label htmlFor="gallery-input" className="btn btn-secondary">
+              {photos.length === 0 ? 'Choose from gallery' : 'Add another photo (gallery)'}
+            </label>
+          </>
+        )}
+        {!canAddMore && (
+          <p className="uploading-as">Maximum of {MAX_PHOTOS} photos added.</p>
+        )}
 
         <button
           className="btn btn-primary"
           onClick={handleUpload}
-          disabled={status === 'uploading' || !file}
+          disabled={status === 'uploading' || photos.length === 0}
         >
           {status === 'uploading' ? 'Uploading...' : 'Upload bill'}
         </button>

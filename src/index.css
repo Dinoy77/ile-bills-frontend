@@ -114,6 +114,22 @@ h1 {
   display: block;
 }
 
+.preview-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.preview-grid .preview {
+  width: 140px;
+}
+
+.preview-grid .preview img {
+  width: 100%;
+  border-radius: 8px;
+}
+
 .btn {
   display: block;
   width: 100%;
@@ -507,12 +523,15 @@ h1 {
     flex-wrap: wrap;
     gap: 8px;
   }
+
   .brand {
     font-size: 1rem;
   }
+
   .nav-links {
     gap: 2px;
   }
+
   .nav-links a {
     padding: 6px 10px;
     font-size: 0.82rem;
@@ -521,18 +540,23 @@ h1 {
   .page-wrap {
     padding: 20px 14px;
   }
+
   .dashboard-page {
     padding: 20px 14px;
   }
+
   .dashboard-header {
     gap: 10px;
   }
+
   .dashboard-header h1 {
     font-size: 1.15rem;
   }
+
   .dashboard-actions {
     width: 100%;
   }
+
   .btn-refresh {
     flex: 1;
     padding: 10px 12px;
@@ -542,6 +566,7 @@ h1 {
     grid-template-columns: 1fr 1fr;
     gap: 10px;
   }
+
   .bill-card img {
     height: 110px;
   }
@@ -549,9 +574,11 @@ h1 {
   .employee-group-header {
     padding: 8px 2px;
   }
+
   .employee-group-name {
     font-size: 0.92rem;
   }
+
   .employee-group-meta {
     font-size: 0.76rem;
   }
@@ -560,6 +587,7 @@ h1 {
     margin-top: 48px;
     padding: 0 16px;
   }
+
   .login-form {
     padding: 26px 20px;
   }
@@ -569,16 +597,20 @@ h1 {
     padding: 24px 18px;
   }
 }
+
 .bill-card {
   position: relative;
 }
+
 .bill-card-selectable {
   cursor: pointer;
 }
+
 .bill-card-selected {
   outline: 2px solid var(--brand);
   outline-offset: -2px;
 }
+
 .bill-select-checkbox {
   position: absolute;
   top: 8px;
@@ -589,6 +621,7 @@ h1 {
   padding: 3px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
 }
+
 .bill-select-checkbox input {
   width: 18px;
   height: 18px;
@@ -611,15 +644,19 @@ h1 {
   font-size: 0.9rem;
   color: var(--brand-dark);
 }
+
 .bulk-actions-buttons {
   display: flex;
   gap: 8px;
 }
 
-.bill-card-actions, .bill-edit-actions {
+.bill-card-actions,
+.bill-edit-actions {
   flex-wrap: wrap;
 }
-.bill-card-actions button, .bill-edit-actions button {
+
+.bill-card-actions button,
+.bill-edit-actions button {
   white-space: nowrap;
 }
 
@@ -636,6 +673,7 @@ h1 {
   color: var(--brand-dark);
   margin-bottom: 16px;
 }
+
 .link-btn {
   background: none;
   border: none;
@@ -645,6 +683,7 @@ h1 {
   cursor: pointer;
   font-size: inherit;
 }
+
 .employee-form {
   background: var(--brand-light);
   border: 1.5px solid var(--brand);
@@ -652,31 +691,38 @@ h1 {
   padding: 16px;
   margin-bottom: 24px;
 }
+
 .employee-form h2 {
   margin-top: 0;
   font-size: 1.1rem;
 }
+
 .employee-form-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
+
 .employee-form-row input {
   flex: 1 1 180px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
 }
+
 .employee-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
 }
-.employee-table th, .employee-table td {
+
+.employee-table th,
+.employee-table td {
   text-align: left;
   padding: 10px;
   border-bottom: 1px solid #eee;
 }
+
 .bill-photo-btn {
   display: block;
   width: 100%;
@@ -685,17 +731,21 @@ h1 {
   background: none;
   cursor: pointer;
 }
+
 .bill-photo-btn img {
   width: 100%;
   display: block;
 }
+
 .password-field {
   position: relative;
 }
+
 .password-field input {
   width: 100%;
   padding-right: 40px;
 }
+
 .password-toggle {
   position: absolute;
   right: 6px;
@@ -708,17 +758,24 @@ h1 {
   padding: 4px;
   line-height: 1;
 }
+
 .employee-form-row .password-field {
   flex: 1 1 180px;
 }
+
 @media (max-width: 600px) {
   .employee-table thead {
     display: none;
   }
-  .employee-table, .employee-table tbody, .employee-table tr, .employee-table td {
+
+  .employee-table,
+  .employee-table tbody,
+  .employee-table tr,
+  .employee-table td {
     display: block;
     width: 100%;
   }
+
   .employee-table tr {
     margin-bottom: 14px;
     border: 1.5px solid var(--border);
@@ -726,6 +783,7 @@ h1 {
     padding: 10px 12px;
     background: white;
   }
+
   .employee-table td {
     border: none;
     padding: 6px 0;
@@ -734,6 +792,7 @@ h1 {
     align-items: center;
     gap: 8px;
   }
+
   .employee-table td::before {
     content: attr(data-label);
     font-weight: 700;
@@ -742,13 +801,16 @@ h1 {
     text-transform: uppercase;
     margin-right: 8px;
   }
+
   .employee-table td:last-child {
     flex-direction: column;
     align-items: stretch;
   }
+
   .employee-table td:last-child::before {
     margin-bottom: 4px;
   }
+
   .employee-table td:last-child .btn-icon-text {
     width: 100%;
     margin-bottom: 6px;
