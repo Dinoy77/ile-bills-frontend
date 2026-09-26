@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { adminLogin } from '../api.js'
+import PasswordInput from './PasswordInput.jsx'
 
 export default function AdminLogin({ onSuccess }) {
   const [password, setPassword] = useState('')
@@ -25,8 +26,7 @@ export default function AdminLogin({ onSuccess }) {
       <form onSubmit={handleSubmit} className="login-form">
         <h1>Admin Login</h1>
         <p className="login-subtitle">Enter the admin password to view all bills.</p>
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Admin password"

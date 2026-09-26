@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { fetchEmployees, createEmployee, deleteEmployee, resetEmployeePassword } from '../api.js'
 import AdminLogin from '../components/AdminLogin.jsx'
+import PasswordInput from '../components/PasswordInput.jsx'
 
 const TOKEN_KEY = 'tile_bills_admin_token'
 
@@ -138,8 +139,7 @@ export default function EmployeesPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
-                    <input
-                        type="password"
+                    <PasswordInput
                         placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}

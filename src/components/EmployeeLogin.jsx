@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { employeeLogin } from '../api.js'
+import PasswordInput from './PasswordInput.jsx'
 
 export default function EmployeeLogin({ onSuccess }) {
   const [email, setEmail] = useState('')
@@ -33,8 +34,7 @@ export default function EmployeeLogin({ onSuccess }) {
           placeholder="Email"
           autoFocus
         />
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
