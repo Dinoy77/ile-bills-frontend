@@ -1,65 +1,135 @@
-export default function BillCard({ bill, selectMode, selected, onToggleSelect, onEdit }) {
-  function handlePhotoClick(e, url) {
-    e.stopPropagation()
-    if (selectMode) return
-    window.open(url, '_blank')
+import { useState } from 'react'
+import { updateBill, deleteBill } from '../api.js'
+
+export default function BillCard({ bill, token, onChanged, selectMode, selected, onToggleSelect }) {
+  const [isEditing, setIsEditing] = useState(false)
+  const [name, setName] = useState(bill.employee_name)
+  const [amount, setAmount] = useState(bill.bill_amount ?? '')
+  const [saving, setSaving] = useState(false)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [error, setError] = useState('')
+
+  const date = bill.created_at ? new Date(bill.created_at).toLocaleString() : ''
+
+  async function handleSave() {
+    if (!name.trim()) {
+      setError('Name cannot be empty.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      await updateBill(token, bill.id, { employeeName: name, billAmount: amount })
+      setIsEditing(false)
+      onChanged()
+    } catch (err) {
+      setError('Could not save changes.')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  function handleDownload(e, downloadUrl) {
-    e.stopPropagation()
-    window.open(downloadUrl, '_blank')
+  function handleCancel() {
+    setName(bill.employee_name)
+    setAmount(bill.bill_amount ?? '')
+    setError('')
+    setIsEditing(false)
   }
 
-  const photos = bill.photo_urls || [{ url: bill.photo_url, download_url: bill.photo_url, source: 'camera' }]
+  async function handleDelete() {
+    setSaving(true)
+    try {
+      await deleteBill(token, bill.id)
+      onChanged()
+    } catch (err) {
+      setError('Could not delete.')
+      setSaving(false)
+    }
+  }
+
+  function handleCardClick() {
+    if (selectMode) {
+      onToggleSelect(bill.id)
+    }
+  }
 
   return (
     <div
-      className={`bill-card ${selectMode ? 'select-mode' : ''} ${selected ? 'selected' : ''}`}
-      onClick={() => selectMode && onToggleSelect(bill.id)}
+      className={`bill-card${selectMode ? ' bill-card-selectable' : ''}${selected ? ' bill-card-selected' : ''}`}
+      onClick={handleCardClick}
     >
       {selectMode && (
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={() => onToggleSelect(bill.id)}
-          onClick={(e) => e.stopPropagation()}
-        />
+        <div className="bill-select-checkbox">
+          <input
+            type="checkbox"
+            checked={!!selected}
+            onChange={() => onToggleSelect(bill.id)}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
 
-      <div className="bill-photos">
-        {photos.map((photo, idx) => (
-          <div className="bill-photo-thumb-wrap" key={idx}>
-            <button
-              type="button"
-              className="bill-photo-thumb"
-              onClick={(e) => handlePhotoClick(e, photo.url)}
-            >
-              <img src={photo.url} alt={`Bill photo ${idx + 1}`} />
-              <span className="photo-tag">{photo.source === 'gallery' ? 'Gallery' : 'Camera'}</span>
+      <a
+        href={bill.photo_url}
+        target="_blank"
+        rel="noreferrer"
+        onClick={(e) => { if (selectMode) e.preventDefault() }}
+      >
+        <img src={bill.photo_url} alt={`Bill by ${bill.employee_name}`} />
+      </a>
+
+      {isEditing && !selectMode ? (
+        <div className="bill-info bill-edit">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="bill-edit-input"
+            placeholder="Employee name"
+          />
+          <input
+            type="number"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="bill-edit-input"
+            placeholder="Amount"
+          />
+          {error && <span className="bill-edit-error">{error}</span>}
+          <div className="bill-edit-actions">
+            <button className="btn-icon-text" onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save'}
             </button>
-            <button
-              type="button"
-              className="download-btn"
-              onClick={(e) => handleDownload(e, photo.download_url || photo.url)}
-            >
-              ⬇ Download
+            <button className="btn-icon-text" onClick={handleCancel} disabled={saving}>
+              Cancel
             </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="bill-info">
+          <strong>{bill.employee_name}</strong>
+          {bill.customer_name && <span>Customer: {bill.customer_name}</span>}
+          {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
+          <span className="bill-date">{date}</span>
 
-      <div className="bill-info">
-        <p><strong>Employee:</strong> {bill.employee_name}</p>
-        <p><strong>Customer:</strong> {bill.customer_name || '-'}</p>
-        <p><strong>Amount:</strong> {bill.bill_amount ? `₹${bill.bill_amount}` : '-'}</p>
-        <p><strong>Payment:</strong> {bill.payment_method || '-'}</p>
-        <p><strong>Date:</strong> {bill.created_at ? new Date(bill.created_at).toLocaleDateString() : '-'}</p>
-      </div>
-
-      {!selectMode && onEdit && (
-        <button type="button" className="btn-secondary" onClick={() => onEdit(bill)}>
-          Edit
-        </button>
+          {!selectMode && (
+            confirmingDelete ? (
+              <div className="bill-edit-actions">
+                <span className="bill-edit-error">Delete this bill?</span>
+                <button className="btn-icon-text danger" onClick={handleDelete} disabled={saving}>
+                  {saving ? 'Deleting...' : 'Yes, delete'}
+                </button>
+                <button className="btn-icon-text" onClick={() => setConfirmingDelete(false)} disabled={saving}>
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="bill-card-actions">
+                <button className="btn-icon-text" onClick={() => setIsEditing(true)}>Edit</button>
+                <button className="btn-icon-text danger" onClick={() => setConfirmingDelete(true)}>Delete</button>
+              </div>
+            )
+          )}
+        </div>
       )}
     </div>
   )
