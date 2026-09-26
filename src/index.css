@@ -816,3 +816,31 @@ h1 {
     margin-bottom: 6px;
   }
 }
+   .bill-photos {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 8px;
+   }
+   .bill-photo-thumb {
+     width: 120px;
+   }
+   .bill-photo-thumb img {
+     width: 100%;
+     border-radius: 8px;
+     display: block;
+   }
+   .photo-thumb-meta {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 4px;
+     margin-top: 4px;
+   }
+   .photo-tag {
+     font-size: 12px;
+     color: #666;
+   }
+   .download-btn {
+     padding: 2px 8px;
+     font-size: 12px;
+   }

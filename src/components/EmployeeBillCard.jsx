@@ -6,6 +6,9 @@ export default function EmployeeBillCard({ bill, token, onChanged }) {
   const [deleting, setDeleting] = useState(false)
 
   const date = bill.created_at ? new Date(bill.created_at).toLocaleString() : ''
+  const photos = bill.photos && bill.photos.length > 0
+    ? bill.photos
+    : [{ url: bill.photo_url, download_url: bill.download_url, source: bill.photo_source }]
 
   async function handleDelete() {
     setDeleting(true)
@@ -20,25 +23,34 @@ export default function EmployeeBillCard({ bill, token, onChanged }) {
 
   return (
     <div className="bill-card">
-      <a href={bill.photo_url} target="_blank" rel="noreferrer">
-        <img src={bill.photo_url} alt={`Bill for ${bill.customer_name || 'customer'}`} />
-      </a>
+      <div className="bill-photos">
+        {photos.map((photo, i) => (
+          <div className="bill-photo-thumb" key={i}>
+            <a href={photo.url} target="_blank" rel="noreferrer">
+              <img src={photo.url} alt={`Bill for ${bill.customer_name || 'customer'} - photo ${i + 1}`} />
+            </a>
+            <div className="photo-thumb-meta">
+              {photo.source && (
+                <span className="photo-tag">{photo.source === 'gallery' ? 'Gallery' : 'Camera'}</span>
+              )}
+              {photo.download_url && (
+                <button
+                  type="button"
+                  className="btn btn-secondary download-btn"
+                  onClick={() => window.open(photo.download_url, '_blank')}
+                >
+                  Download
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="bill-info">
         <strong>{bill.customer_name || 'Untitled bill'}</strong>
         {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
         {bill.payment_method && <span>{bill.payment_method}</span>}
-        {bill.photo_source && <span>{bill.photo_source === 'gallery' ? 'Uploaded from gallery' : 'Camera photo'}</span>}
-
-        {bill.download_url && (
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => window.open(bill.download_url, '_blank')}
-          >
-            Download
-          </button>
-        )}
 
         <span className="bill-date">{date}</span>
 

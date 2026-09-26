@@ -10,6 +10,9 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
   const [error, setError] = useState('')
 
   const date = bill.created_at ? new Date(bill.created_at).toLocaleString() : ''
+  const photos = bill.photos && bill.photos.length > 0
+    ? bill.photos
+    : [{ url: bill.photo_url, download_url: bill.download_url, source: bill.photo_source }]
 
   async function handleSave() {
     if (!name.trim()) {
@@ -69,14 +72,34 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
         </div>
       )}
 
-      <a
-        href={bill.photo_url}
-        target="_blank"
-        rel="noreferrer"
-        onClick={(e) => { if (selectMode) e.preventDefault() }}
-      >
-        <img src={bill.photo_url} alt={`Bill by ${bill.employee_name}`} />
-      </a>
+      <div className="bill-photos">
+        {photos.map((photo, i) => (
+          <div className="bill-photo-thumb" key={i}>
+            <a
+              href={photo.url}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => { if (selectMode) e.preventDefault() }}
+            >
+              <img src={photo.url} alt={`Bill by ${bill.employee_name} - photo ${i + 1}`} />
+            </a>
+            <div className="photo-thumb-meta">
+              {photo.source && (
+                <span className="photo-tag">{photo.source === 'gallery' ? 'Gallery' : 'Camera'}</span>
+              )}
+              {photo.download_url && (
+                <button
+                  type="button"
+                  className="btn btn-secondary download-btn"
+                  onClick={(e) => { e.stopPropagation(); window.open(photo.download_url, '_blank') }}
+                >
+                  Download
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {isEditing && !selectMode ? (
         <div className="bill-info bill-edit">
@@ -110,17 +133,6 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
           {bill.customer_name && <span>Customer: {bill.customer_name}</span>}
           {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
           {bill.payment_method && <span>{bill.payment_method}</span>}
-          {bill.photo_source && <span>{bill.photo_source === 'gallery' ? 'Uploaded from gallery' : 'Camera photo'}</span>}
-
-          {bill.download_url && (
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => window.open(bill.download_url, '_blank')}
-            >
-              Download
-            </button>
-          )}
 
           <span className="bill-date">{date}</span>
 
