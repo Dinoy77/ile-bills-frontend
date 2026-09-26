@@ -816,31 +816,34 @@ h1 {
     margin-bottom: 6px;
   }
 }
-   .bill-photos {
-     display: flex;
-     flex-wrap: wrap;
-     gap: 8px;
-   }
-   .bill-photo-thumb {
-     width: 120px;
-   }
-   .bill-photo-thumb img {
-     width: 100%;
-     border-radius: 8px;
-     display: block;
-   }
-   .photo-thumb-meta {
-     display: flex;
-     align-items: center;
-     justify-content: space-between;
-     gap: 4px;
-     margin-top: 4px;
-   }
-   .photo-tag {
-     font-size: 12px;
-     color: #666;
-   }
-   .download-btn {
-     padding: 2px 8px;
-     font-size: 12px;
-   }
+.bill-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+}
+.bill-photo-thumb {
+  width: 100%;
+}
+.bill-photo-thumb img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 8px;
+  display: block;
+}
+.photo-thumb-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 4px;
+}
+.photo-tag {
+  font-size: 12px;
+  color: #666;
+}
+.download-btn {
+  padding: 2px 8px;
+  font-size: 12px;
+  width: 100%;
+}
