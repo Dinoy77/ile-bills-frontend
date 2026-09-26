@@ -29,6 +29,17 @@ export default function EmployeeBillCard({ bill, token, onChanged }) {
         {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
         {bill.payment_method && <span>{bill.payment_method}</span>}
         {bill.photo_source && <span>{bill.photo_source === 'gallery' ? 'Uploaded from gallery' : 'Camera photo'}</span>}
+
+        {bill.download_url && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => window.open(bill.download_url, '_blank')}
+          >
+            Download
+          </button>
+        )}
+
         <span className="bill-date">{date}</span>
 
         {confirmingDelete ? (
