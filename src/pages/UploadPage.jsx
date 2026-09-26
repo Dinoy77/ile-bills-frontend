@@ -13,6 +13,7 @@ export default function UploadPage() {
   const [file, setFile] = useState(null)
   const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('')
   const [status, setStatus] = useState('idle')
   const fileInputRef = useRef(null)
 
@@ -66,6 +67,7 @@ export default function UploadPage() {
       setPreview(null)
       setCustomerName('')
       setBillAmount('')
+      setPaymentMethod('')
       if (fileInputRef.current) fileInputRef.current.value = ''
     } catch (err) {
       console.error(err)
@@ -110,7 +112,7 @@ export default function UploadPage() {
           />
         </label>
 
-                <label className="field">
+        <label className="field">
           Payment method
           <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
             <option value="">Select payment method</option>
