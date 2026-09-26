@@ -6,6 +6,7 @@ export default function EmployeeBillCard({ bill, token, onChanged }) {
   const [deleting, setDeleting] = useState(false)
 
   const date = bill.created_at ? new Date(bill.created_at).toLocaleString() : ''
+  const photos = bill.photo_urls && bill.photo_urls.length > 0 ? bill.photo_urls : [bill.photo_url]
 
   async function handleDelete() {
     setDeleting(true)
@@ -20,9 +21,18 @@ export default function EmployeeBillCard({ bill, token, onChanged }) {
 
   return (
     <div className="bill-card">
-      <a href={bill.photo_url} target="_blank" rel="noreferrer">
-        <img src={bill.photo_url} alt={`Bill for ${bill.customer_name || 'customer'}`} />
-      </a>
+      <div className="bill-photos">
+        {photos.map((url, i) => (
+          <button
+            key={i}
+            type="button"
+            className="bill-photo-thumb"
+            onClick={() => window.open(url, '_blank')}
+          >
+            <img src={url} alt={`Bill photo ${i + 1} for ${bill.customer_name || 'customer'}`} />
+          </button>
+        ))}
+      </div>
 
       <div className="bill-info">
         <strong>{bill.customer_name || 'Untitled bill'}</strong>

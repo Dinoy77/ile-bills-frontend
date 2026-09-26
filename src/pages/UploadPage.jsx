@@ -4,13 +4,14 @@ import EmployeeLogin from '../components/EmployeeLogin.jsx'
 
 const TOKEN_KEY = 'tile_bills_employee_token'
 const NAME_KEY = 'tile_bills_employee_name'
+const MAX_PHOTOS = 3
 
 export default function UploadPage() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [employeeName, setEmployeeName] = useState(() => localStorage.getItem(NAME_KEY) || '')
 
-  const [preview, setPreview] = useState(null)
-  const [file, setFile] = useState(null)
+  const [files, setFiles] = useState([])
+  const [previews, setPreviews] = useState([])
   const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
   const [status, setStatus] = useState('idle')
@@ -36,14 +37,26 @@ export default function UploadPage() {
   const handleFileSelect = (e) => {
     const selected = e.target.files[0]
     if (!selected) return
-    setFile(selected)
-    setPreview(URL.createObjectURL(selected))
+    if (files.length >= MAX_PHOTOS) return
+    setFiles((prev) => [...prev, selected])
+    setPreviews((prev) => [...prev, URL.createObjectURL(selected)])
     setStatus('idle')
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  function handleRemovePhoto(index) {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+    setPreviews((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function handleAddPhotoClick() {
+    if (files.length >= MAX_PHOTOS) return
+    fileInputRef.current?.click()
   }
 
   const handleUpload = async () => {
-    if (!file || !customerName.trim()) {
-      alert('Please enter the customer/bill name and take a photo first.')
+    if (files.length === 0 || !customerName.trim()) {
+      alert('Please enter the customer/bill name and take at least one photo first.')
       return
     }
 
@@ -53,12 +66,12 @@ export default function UploadPage() {
         token,
         customerName: customerName.trim(),
         billAmount: billAmount || null,
-        photoFile: file,
+        photoFiles: files,
       })
 
       setStatus('success')
-      setFile(null)
-      setPreview(null)
+      setFiles([])
+      setPreviews([])
       setCustomerName('')
       setBillAmount('')
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -105,9 +118,16 @@ export default function UploadPage() {
           />
         </label>
 
-        {preview && (
-          <div className="preview">
-            <img src={preview} alt="Bill preview" />
+        {previews.length > 0 && (
+          <div className="preview-grid">
+            {previews.map((src, i) => (
+              <div className="preview-thumb" key={i}>
+                <img src={src} alt={`Bill photo ${i + 1}`} />
+                <button type="button" className="preview-remove" onClick={() => handleRemovePhoto(i)}>
+                  Remove
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -118,16 +138,25 @@ export default function UploadPage() {
           capture="environment"
           onChange={handleFileSelect}
           style={{ display: 'none' }}
-          id="camera-input"
         />
-        <label htmlFor="camera-input" className="btn btn-secondary">
-          {preview ? 'Retake photo' : 'Take photo'}
-        </label>
+
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={handleAddPhotoClick}
+          disabled={files.length >= MAX_PHOTOS}
+        >
+          {files.length === 0
+            ? 'Take photo'
+            : files.length >= MAX_PHOTOS
+            ? `Photo limit reached (${MAX_PHOTOS}/${MAX_PHOTOS})`
+            : `Add another photo (${files.length}/${MAX_PHOTOS})`}
+        </button>
 
         <button
           className="btn btn-primary"
           onClick={handleUpload}
-          disabled={status === 'uploading' || !file}
+          disabled={status === 'uploading' || files.length === 0}
         >
           {status === 'uploading' ? 'Uploading...' : 'Upload bill'}
         </button>

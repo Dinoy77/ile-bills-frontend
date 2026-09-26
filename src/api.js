@@ -1,10 +1,10 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-export async function uploadBill({ token, customerName, billAmount, photoFile }) {
+export async function uploadBill({ token, customerName, billAmount, photoFiles }) {
   const formData = new FormData()
   formData.append('customer_name', customerName)
   if (billAmount) formData.append('bill_amount', billAmount)
-  formData.append('photo', photoFile)
+  photoFiles.forEach((file) => formData.append('photos', file))
 
   const res = await fetch(`${API_URL}/bills`, {
     method: 'POST',

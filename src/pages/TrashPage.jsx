@@ -90,13 +90,18 @@ export default function TrashPage() {
         <div className="bill-grid">
           {bills.map((bill) => (
             <div className="bill-card" key={bill.id}>
-              <button
-                type="button"
-                className="bill-photo-btn"
-                onClick={() => window.open(bill.photo_url, '_blank')}
-              >
-                <img src={bill.photo_url} alt={`Bill by ${bill.employee_name}`} />
-              </button>
+              <div className="bill-photos">
+                {(bill.photo_urls && bill.photo_urls.length > 0 ? bill.photo_urls : [bill.photo_url]).map((url, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    className="bill-photo-thumb"
+                    onClick={() => window.open(url, '_blank')}
+                  >
+                    <img src={url} alt={`Bill photo ${i + 1} by ${bill.employee_name}`} />
+                  </button>
+                ))}
+              </div>
               <div className="bill-info">
                 <strong>{bill.employee_name}</strong>
                 {bill.customer_name && <span>Customer: {bill.customer_name}</span>}

@@ -10,6 +10,7 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
   const [error, setError] = useState('')
 
   const date = bill.created_at ? new Date(bill.created_at).toLocaleString() : ''
+  const photos = bill.photo_urls && bill.photo_urls.length > 0 ? bill.photo_urls : [bill.photo_url]
 
   async function handleSave() {
     if (!name.trim()) {
@@ -53,6 +54,12 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
     }
   }
 
+  function handlePhotoClick(e, url) {
+    if (selectMode) return
+    e.stopPropagation()
+    window.open(url, '_blank')
+  }
+
   return (
     <div
       className={`bill-card${selectMode ? ' bill-card-selectable' : ''}${selected ? ' bill-card-selected' : ''}`}
@@ -69,14 +76,18 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
         </div>
       )}
 
-      <a
-        href={bill.photo_url}
-        target="_blank"
-        rel="noreferrer"
-        onClick={(e) => { if (selectMode) e.preventDefault() }}
-      >
-        <img src={bill.photo_url} alt={`Bill by ${bill.employee_name}`} />
-      </a>
+      <div className="bill-photos">
+        {photos.map((url, i) => (
+          <button
+            key={i}
+            type="button"
+            className="bill-photo-thumb"
+            onClick={(e) => handlePhotoClick(e, url)}
+          >
+            <img src={url} alt={`Bill photo ${i + 1}`} />
+          </button>
+        ))}
+      </div>
 
       {isEditing && !selectMode ? (
         <div className="bill-info bill-edit">
