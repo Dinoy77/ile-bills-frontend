@@ -892,3 +892,20 @@ h1 {
 .download-btn:hover {
   background: #dde5ee;
 }
+.upload-form label {
+  display: block;
+  margin-top: 16px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.upload-form input[type="text"],
+.upload-form input[type="number"],
+.upload-form select {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  padding: 10px;
+  margin-bottom: 4px;
+  box-sizing: border-box;
+}
