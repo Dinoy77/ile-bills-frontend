@@ -711,3 +711,46 @@ h1 {
 .employee-form-row .password-field {
   flex: 1 1 180px;
 }
+@media (max-width: 600px) {
+  .employee-table thead {
+    display: none;
+  }
+  .employee-table, .employee-table tbody, .employee-table tr, .employee-table td {
+    display: block;
+    width: 100%;
+  }
+  .employee-table tr {
+    margin-bottom: 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: white;
+  }
+  .employee-table td {
+    border: none;
+    padding: 6px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .employee-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-right: 8px;
+  }
+  .employee-table td:last-child {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .employee-table td:last-child::before {
+    margin-bottom: 4px;
+  }
+  .employee-table td:last-child .btn-icon-text {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+}

@@ -169,10 +169,10 @@ export default function EmployeesPage() {
                     <tbody>
                         {employees.map((emp) => (
                             <tr key={emp.id}>
-                                <td>{emp.name}</td>
-                                <td>{emp.email}</td>
-                                <td>{emp.bill_count}</td>
-                                <td>
+                                <td data-label="Name">{emp.name}</td>
+                                <td data-label="Email">{emp.email}</td>
+                                <td data-label="Bills uploaded">{emp.bill_count}</td>
+                                <td data-label="Actions">
                                     <button className="btn-icon-text" onClick={() => handleResetPassword(emp.id, emp.name)}>
                                         Reset password
                                     </button>
