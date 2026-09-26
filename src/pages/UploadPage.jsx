@@ -11,11 +11,13 @@ export default function UploadPage() {
 
   const [preview, setPreview] = useState(null)
   const [file, setFile] = useState(null)
+  const [photoSource, setPhotoSource] = useState('camera')
   const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('')
   const [status, setStatus] = useState('idle')
-  const fileInputRef = useRef(null)
+  const cameraInputRef = useRef(null)
+  const galleryInputRef = useRef(null)
 
   function handleLoginSuccess(newToken, name) {
     localStorage.removeItem('tile_bills_admin_token')
@@ -34,13 +36,16 @@ export default function UploadPage() {
     window.dispatchEvent(new Event('authchange'))
   }
 
-  const handleFileSelect = (e) => {
-    const selected = e.target.files[0]
+  function selectFile(selected, source) {
     if (!selected) return
     setFile(selected)
+    setPhotoSource(source)
     setPreview(URL.createObjectURL(selected))
     setStatus('idle')
   }
+
+  const handleCameraSelect = (e) => selectFile(e.target.files[0], 'camera')
+  const handleGallerySelect = (e) => selectFile(e.target.files[0], 'gallery')
 
   const handleUpload = async () => {
     if (!file || !customerName.trim()) {
@@ -59,16 +64,19 @@ export default function UploadPage() {
         customerName: customerName.trim(),
         billAmount: billAmount || null,
         paymentMethod,
+        photoSource,
         photoFile: file,
       })
 
       setStatus('success')
       setFile(null)
       setPreview(null)
+      setPhotoSource('camera')
       setCustomerName('')
       setBillAmount('')
       setPaymentMethod('')
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+      if (galleryInputRef.current) galleryInputRef.current.value = ''
     } catch (err) {
       console.error(err)
       if (err.message === 'UNAUTHORIZED') {
@@ -126,20 +134,33 @@ export default function UploadPage() {
         {preview && (
           <div className="preview">
             <img src={preview} alt="Bill preview" />
+            <p className="uploading-as">Source: <strong>{photoSource === 'gallery' ? 'Gallery' : 'Camera'}</strong></p>
           </div>
         )}
 
         <input
-          ref={fileInputRef}
+          ref={cameraInputRef}
           type="file"
           accept="image/*"
           capture="environment"
-          onChange={handleFileSelect}
+          onChange={handleCameraSelect}
           style={{ display: 'none' }}
           id="camera-input"
         />
+        <input
+          ref={galleryInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleGallerySelect}
+          style={{ display: 'none' }}
+          id="gallery-input"
+        />
+
         <label htmlFor="camera-input" className="btn btn-secondary">
           {preview ? 'Retake photo' : 'Take photo'}
+        </label>
+        <label htmlFor="gallery-input" className="btn btn-secondary">
+          Choose from gallery
         </label>
 
         <button
