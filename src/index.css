@@ -847,3 +847,48 @@ h1 {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.upload-buttons-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.bill-photo-thumb-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.photo-tag {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.bill-photo-thumb {
+  position: relative;
+}
+
+.preview-thumb {
+  position: relative;
+}
+
+.download-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  background: #eef2f7;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.download-btn:hover {
+  background: #dde5ee;
+}

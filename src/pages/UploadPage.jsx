@@ -1,129 +1,161 @@
 import { useState, useRef } from 'react'
-import { uploadBill } from '../api.js'
-import EmployeeLogin from '../components/EmployeeLogin.jsx'
+import { useNavigate } from 'react-router-dom'
+import { uploadBill } from '../api'
 
-const TOKEN_KEY = 'tile_bills_employee_token'
-const NAME_KEY = 'tile_bills_employee_name'
 const MAX_PHOTOS = 3
 
 export default function UploadPage() {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
-  const [employeeName, setEmployeeName] = useState(() => localStorage.getItem(NAME_KEY) || '')
+  const navigate = useNavigate()
+  const cameraInputRef = useRef(null)
+  const galleryInputRef = useRef(null)
 
-  const [files, setFiles] = useState([])
-  const [previews, setPreviews] = useState([])
   const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
-  const [status, setStatus] = useState('idle')
-  const fileInputRef = useRef(null)
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const [files, setFiles] = useState([])
+  const [previews, setPreviews] = useState([])
+  const [sources, setSources] = useState([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  function handleLoginSuccess(newToken, name) {
-    localStorage.removeItem('tile_bills_admin_token')
-    localStorage.setItem(TOKEN_KEY, newToken)
-    localStorage.setItem(NAME_KEY, name)
-    setToken(newToken)
-    setEmployeeName(name)
-    window.dispatchEvent(new Event('authchange'))
-  }
+  const employeeName = localStorage.getItem('tile_bills_employee_name') || ''
+  const token = localStorage.getItem('tile_bills_employee_token')
 
-  function handleLogout() {
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(NAME_KEY)
-    setToken(null)
-    setEmployeeName('')
-    window.dispatchEvent(new Event('authchange'))
-  }
-
-  const handleFileSelect = (e) => {
-    const selected = e.target.files[0]
-    if (!selected) return
+  function addFile(file, source) {
     if (files.length >= MAX_PHOTOS) return
-    setFiles((prev) => [...prev, selected])
-    setPreviews((prev) => [...prev, URL.createObjectURL(selected)])
-    setStatus('idle')
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    setFiles((prev) => [...prev, file])
+    setPreviews((prev) => [...prev, URL.createObjectURL(file)])
+    setSources((prev) => [...prev, source])
   }
 
-  function handleRemovePhoto(index) {
+  function handleCameraChange(e) {
+    const file = e.target.files[0]
+    if (file) addFile(file, 'camera')
+    e.target.value = ''
+  }
+
+  function handleGalleryChange(e) {
+    const file = e.target.files[0]
+    if (file) addFile(file, 'gallery')
+    e.target.value = ''
+  }
+
+  function removePhoto(index) {
     setFiles((prev) => prev.filter((_, i) => i !== index))
     setPreviews((prev) => prev.filter((_, i) => i !== index))
+    setSources((prev) => prev.filter((_, i) => i !== index))
   }
 
-  function handleAddPhotoClick() {
-    if (files.length >= MAX_PHOTOS) return
-    fileInputRef.current?.click()
-  }
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setError('')
 
-  const handleUpload = async () => {
-    if (files.length === 0 || !customerName.trim()) {
-      alert('Please enter the customer/bill name and take at least one photo first.')
+    if (!customerName.trim()) {
+      setError('Please enter the customer / bill name')
+      return
+    }
+    if (!paymentMethod) {
+      setError('Please select a payment method')
+      return
+    }
+    if (files.length === 0) {
+      setError('Please add at least one photo')
       return
     }
 
-    setStatus('uploading')
+    setLoading(true)
     try {
       await uploadBill({
         token,
-        customerName: customerName.trim(),
-        billAmount: billAmount || null,
+        customerName,
+        billAmount,
+        paymentMethod,
         photoFiles: files,
+        photoSources: sources,
       })
-
-      setStatus('success')
-      setFiles([])
-      setPreviews([])
-      setCustomerName('')
-      setBillAmount('')
-      if (fileInputRef.current) fileInputRef.current.value = ''
+      navigate('/my-bills')
     } catch (err) {
-      console.error(err)
-      if (err.message === 'UNAUTHORIZED') {
-        handleLogout()
-      } else {
-        setStatus('error')
-      }
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
-  if (!token) {
-    return <EmployeeLogin onSuccess={handleLoginSuccess} />
-  }
-
   return (
-    <div className="upload-page">
-      <div className="upload-card">
-        <h1>Upload a bill</h1>
-        <p className="uploading-as">
-          Uploading as <strong>{employeeName}</strong> ·{' '}
-          <button type="button" className="link-btn" onClick={handleLogout}>Not you? Log out</button>
-        </p>
+    <div className="page-container">
+      <h2>Upload Bill</h2>
+      <p>Uploading as: <strong>{employeeName}</strong></p>
 
-        <label className="field">
-          Customer / bill name
-          <input
-            type="text"
-            value={customerName}
-            onChange={(e) => setCustomerName(e.target.value)}
-            placeholder="e.g. Sharma Tiles Showroom"
-          />
-        </label>
+      <form onSubmit={handleSubmit} className="upload-form">
+        <label>Customer / Bill Name</label>
+        <input
+          type="text"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          placeholder="Enter customer or bill name"
+        />
 
-        <label className="field">
-          Bill amount (optional)
-          <input
-            type="number"
-            value={billAmount}
-            onChange={(e) => setBillAmount(e.target.value)}
-            placeholder="e.g. 4500"
-          />
-        </label>
+        <label>Bill Amount (optional)</label>
+        <input
+          type="number"
+          value={billAmount}
+          onChange={(e) => setBillAmount(e.target.value)}
+          placeholder="Enter amount"
+        />
+
+        <label>Payment Method</label>
+        <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+          <option value="">Select payment method</option>
+          <option value="Cash">Cash</option>
+          <option value="Credit">Credit</option>
+          <option value="Account">Account</option>
+          <option value="UPI">UPI</option>
+        </select>
+
+        <label>Bill Photos ({files.length}/{MAX_PHOTOS})</label>
+
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          ref={cameraInputRef}
+          onChange={handleCameraChange}
+          style={{ display: 'none' }}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          ref={galleryInputRef}
+          onChange={handleGalleryChange}
+          style={{ display: 'none' }}
+        />
+
+        <div className="upload-buttons-row">
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={files.length >= MAX_PHOTOS}
+            onClick={() => cameraInputRef.current.click()}
+          >
+            📷 Take Photo
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={files.length >= MAX_PHOTOS}
+            onClick={() => galleryInputRef.current.click()}
+          >
+            🖼️ Choose from Gallery
+          </button>
+        </div>
 
         {previews.length > 0 && (
           <div className="preview-grid">
-            {previews.map((src, i) => (
-              <div className="preview-thumb" key={i}>
-                <img src={src} alt={`Bill photo ${i + 1}`} />
-                <button type="button" className="preview-remove" onClick={() => handleRemovePhoto(i)}>
+            {previews.map((src, idx) => (
+              <div className="preview-thumb" key={idx}>
+                <img src={src} alt={`Preview ${idx + 1}`} />
+                <span className="photo-tag">{sources[idx] === 'gallery' ? 'Gallery' : 'Camera'}</span>
+                <button type="button" className="preview-remove" onClick={() => removePhoto(idx)}>
                   Remove
                 </button>
               </div>
@@ -131,41 +163,12 @@ export default function UploadPage() {
           </div>
         )}
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleFileSelect}
-          style={{ display: 'none' }}
-        />
+        {error && <p className="error-text">{error}</p>}
 
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={handleAddPhotoClick}
-          disabled={files.length >= MAX_PHOTOS}
-        >
-          {files.length === 0
-            ? 'Take photo'
-            : files.length >= MAX_PHOTOS
-            ? `Photo limit reached (${MAX_PHOTOS}/${MAX_PHOTOS})`
-            : `Add another photo (${files.length}/${MAX_PHOTOS})`}
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading ? 'Uploading...' : 'Upload Bill'}
         </button>
-
-        <button
-          className="btn btn-primary"
-          onClick={handleUpload}
-          disabled={status === 'uploading' || files.length === 0}
-        >
-          {status === 'uploading' ? 'Uploading...' : 'Upload bill'}
-        </button>
-
-        {status === 'success' && <p className="msg success">Bill uploaded.</p>}
-        {status === 'error' && (
-          <p className="msg error">Upload failed. Is the backend running?</p>
-        )}
-      </div>
+      </form>
     </div>
   )
 }

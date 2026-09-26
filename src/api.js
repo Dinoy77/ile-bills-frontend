@@ -1,26 +1,28 @@
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-export async function uploadBill({ token, customerName, billAmount, photoFiles }) {
+export async function uploadBill({ token, customerName, billAmount, paymentMethod, photoFiles, photoSources }) {
   const formData = new FormData()
   formData.append('customer_name', customerName)
   if (billAmount) formData.append('bill_amount', billAmount)
+  formData.append('payment_method', paymentMethod)
+  formData.append('photo_sources', JSON.stringify(photoSources))
   photoFiles.forEach((file) => formData.append('photos', file))
 
-  const res = await fetch(`${API_URL}/bills`, {
+  const response = await fetch(`${API_URL}/bills`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: formData,
   })
 
-  if (res.status === 401) {
-    throw new Error('UNAUTHORIZED')
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.detail || 'Failed to upload bill')
   }
-  if (!res.ok) {
-    throw new Error(`Upload failed: ${res.status}`)
-  }
-  return res.json()
-}
 
+  return response.json()
+}
 export async function fetchBills(token) {
   const res = await fetch(`${API_URL}/bills`, {
     headers: { Authorization: `Bearer ${token}` },
