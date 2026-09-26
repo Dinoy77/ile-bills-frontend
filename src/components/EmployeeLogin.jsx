@@ -1,48 +1,189 @@
-import { useState } from 'react'
-import { employeeLogin } from '../api.js'
-import PasswordInput from './PasswordInput.jsx'
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { uploadBill } from '../api'
+import EmployeeLogin from '../components/EmployeeLogin.jsx'
 
-export default function EmployeeLogin({ onSuccess }) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+const TOKEN_KEY = 'tile_bills_employee_token'
+const NAME_KEY = 'tile_bills_employee_name'
+const MAX_PHOTOS = 3
+
+export default function UploadPage() {
+  const navigate = useNavigate()
+  const cameraInputRef = useRef(null)
+  const galleryInputRef = useRef(null)
+
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [employeeName, setEmployeeName] = useState(() => localStorage.getItem(NAME_KEY) || '')
+
+  const [customerName, setCustomerName] = useState('')
+  const [billAmount, setBillAmount] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState('')
+  const [files, setFiles] = useState([])
+  const [previews, setPreviews] = useState([])
+  const [sources, setSources] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const handleSubmit = async (e) => {
+  function handleLoginSuccess(newToken, name) {
+    localStorage.removeItem('tile_bills_admin_token')
+    localStorage.setItem(TOKEN_KEY, newToken)
+    localStorage.setItem(NAME_KEY, name)
+    setToken(newToken)
+    setEmployeeName(name)
+    window.dispatchEvent(new Event('authchange'))
+  }
+
+  function addFile(file, source) {
+    if (files.length >= MAX_PHOTOS) return
+    setFiles((prev) => [...prev, file])
+    setPreviews((prev) => [...prev, URL.createObjectURL(file)])
+    setSources((prev) => [...prev, source])
+  }
+
+  function handleCameraChange(e) {
+    const file = e.target.files[0]
+    if (file) addFile(file, 'camera')
+    e.target.value = ''
+  }
+
+  function handleGalleryChange(e) {
+    const file = e.target.files[0]
+    if (file) addFile(file, 'gallery')
+    e.target.value = ''
+  }
+
+  function removePhoto(index) {
+    setFiles((prev) => prev.filter((_, i) => i !== index))
+    setPreviews((prev) => prev.filter((_, i) => i !== index))
+    setSources((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+
+    if (!customerName.trim()) {
+      setError('Please enter the customer / bill name')
+      return
+    }
+    if (!paymentMethod) {
+      setError('Please select a payment method')
+      return
+    }
+    if (files.length === 0) {
+      setError('Please add at least one photo')
+      return
+    }
+
     setLoading(true)
     try {
-      const data = await employeeLogin(email.trim(), password)
-      onSuccess(data.token, data.name)
+      await uploadBill({
+        token,
+        customerName,
+        billAmount,
+        paymentMethod,
+        photoFiles: files,
+        photoSources: sources,
+      })
+      navigate('/my-bills')
     } catch (err) {
-      setError('Incorrect email or password.')
+      setError(err.message)
     } finally {
       setLoading(false)
     }
   }
 
+  if (!token) {
+    return <EmployeeLogin onSuccess={handleLoginSuccess} />
+  }
+
   return (
-    <div className="login-page">
-      <form onSubmit={handleSubmit} className="login-form">
-        <h1>Employee Login</h1>
-        <p className="login-subtitle">Log in with the email and password your admin gave you.</p>
+    <div className="page-container">
+      <h2>Upload Bill</h2>
+      <p>Uploading as: <strong>{employeeName}</strong></p>
+
+      <form onSubmit={handleSubmit} className="upload-form">
+        <label>Customer / Bill Name</label>
         <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          autoFocus
+          type="text"
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          placeholder="Enter customer or bill name"
         />
-        <PasswordInput
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+
+        <label>Bill Amount (optional)</label>
+        <input
+          type="number"
+          value={billAmount}
+          onChange={(e) => setBillAmount(e.target.value)}
+          placeholder="Enter amount"
         />
-        <button type="submit" className="btn btn-primary" disabled={loading || !email || !password}>
-          {loading ? 'Checking...' : 'Log in'}
+
+        <label>Payment Method</label>
+        <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+          <option value="">Select payment method</option>
+          <option value="Cash">Cash</option>
+          <option value="Credit">Credit</option>
+          <option value="Account">Account</option>
+          <option value="UPI">UPI</option>
+        </select>
+
+        <label>Bill Photos ({files.length}/{MAX_PHOTOS})</label>
+
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          ref={cameraInputRef}
+          onChange={handleCameraChange}
+          style={{ display: 'none' }}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          ref={galleryInputRef}
+          onChange={handleGalleryChange}
+          style={{ display: 'none' }}
+        />
+
+        <div className="upload-buttons-row">
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={files.length >= MAX_PHOTOS}
+            onClick={() => cameraInputRef.current.click()}
+          >
+            📷 Take Photo
+          </button>
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={files.length >= MAX_PHOTOS}
+            onClick={() => galleryInputRef.current.click()}
+          >
+            🖼️ Choose from Gallery
+          </button>
+        </div>
+
+        {previews.length > 0 && (
+          <div className="preview-grid">
+            {previews.map((src, idx) => (
+              <div className="preview-thumb" key={idx}>
+                <img src={src} alt={`Preview ${idx + 1}`} />
+                <span className="photo-tag">{sources[idx] === 'gallery' ? 'Gallery' : 'Camera'}</span>
+                <button type="button" className="preview-remove" onClick={() => removePhoto(idx)}>
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {error && <p className="error-text">{error}</p>}
+
+        <button type="submit" className="btn-primary" disabled={loading}>
+          {loading ? 'Uploading...' : 'Upload Bill'}
         </button>
-        {error && <p className="msg error">{error}</p>}
       </form>
     </div>
   )

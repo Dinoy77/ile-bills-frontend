@@ -1,13 +1,19 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { uploadBill } from '../api'
+import EmployeeLogin from '../components/EmployeeLogin.jsx'
 
+const TOKEN_KEY = 'tile_bills_employee_token'
+const NAME_KEY = 'tile_bills_employee_name'
 const MAX_PHOTOS = 3
 
 export default function UploadPage() {
   const navigate = useNavigate()
   const cameraInputRef = useRef(null)
   const galleryInputRef = useRef(null)
+
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
+  const [employeeName, setEmployeeName] = useState(() => localStorage.getItem(NAME_KEY) || '')
 
   const [customerName, setCustomerName] = useState('')
   const [billAmount, setBillAmount] = useState('')
@@ -18,8 +24,14 @@ export default function UploadPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  const employeeName = localStorage.getItem('tile_bills_employee_name') || ''
-  const token = localStorage.getItem('tile_bills_employee_token')
+  function handleLoginSuccess(newToken, name) {
+    localStorage.removeItem('tile_bills_admin_token')
+    localStorage.setItem(TOKEN_KEY, newToken)
+    localStorage.setItem(NAME_KEY, name)
+    setToken(newToken)
+    setEmployeeName(name)
+    window.dispatchEvent(new Event('authchange'))
+  }
 
   function addFile(file, source) {
     if (files.length >= MAX_PHOTOS) return
@@ -79,6 +91,10 @@ export default function UploadPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!token) {
+    return <EmployeeLogin onSuccess={handleLoginSuccess} />
   }
 
   return (
