@@ -109,6 +109,7 @@ export default function BillCard({ bill, token, onChanged, selectMode, selected,
           <strong>{bill.employee_name}</strong>
           {bill.customer_name && <span>Customer: {bill.customer_name}</span>}
           {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
+          {bill.payment_method && <span>{bill.payment_method}</span>}
           <span className="bill-date">{date}</span>
 
           {!selectMode && (

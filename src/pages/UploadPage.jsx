@@ -46,6 +46,10 @@ export default function UploadPage() {
       alert('Please enter the customer/bill name and take a photo first.')
       return
     }
+    if (!paymentMethod) {
+      alert('Please select a payment method.')
+      return
+    }
 
     setStatus('uploading')
     try {
@@ -53,6 +57,7 @@ export default function UploadPage() {
         token,
         customerName: customerName.trim(),
         billAmount: billAmount || null,
+        paymentMethod,
         photoFile: file,
       })
 
@@ -103,6 +108,17 @@ export default function UploadPage() {
             onChange={(e) => setBillAmount(e.target.value)}
             placeholder="e.g. 4500"
           />
+        </label>
+
+                <label className="field">
+          Payment method
+          <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+            <option value="">Select payment method</option>
+            <option value="Cash">Cash</option>
+            <option value="Credit">Credit</option>
+            <option value="Account">Account</option>
+            <option value="UPI">UPI</option>
+          </select>
         </label>
 
         {preview && (

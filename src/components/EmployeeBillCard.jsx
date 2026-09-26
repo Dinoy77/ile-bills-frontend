@@ -27,6 +27,7 @@ export default function EmployeeBillCard({ bill, token, onChanged }) {
       <div className="bill-info">
         <strong>{bill.customer_name || 'Untitled bill'}</strong>
         {bill.bill_amount != null && <span>Rs. {bill.bill_amount}</span>}
+        {bill.payment_method && <span>{bill.payment_method}</span>}
         <span className="bill-date">{date}</span>
 
         {confirmingDelete ? (
