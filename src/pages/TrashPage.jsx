@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react'
-import { fetchTrash, restoreBill, permanentlyDeleteBill } from '../api.js'
+import {
+  fetchTrash,
+  restoreBill,
+  permanentlyDeleteBill,
+  bulkRestoreBills,
+  bulkPermanentlyDeleteBills,
+} from '../api.js'
 import AdminLogin from '../components/AdminLogin.jsx'
 
 const TOKEN_KEY = 'tile_bills_admin_token'
@@ -8,6 +14,9 @@ export default function TrashPage() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [bills, setBills] = useState([])
   const [status, setStatus] = useState('loading')
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState(new Set())
+  const [bulkWorking, setBulkWorking] = useState(false)
 
   useEffect(() => {
     if (token) load(token)
@@ -66,19 +75,120 @@ export default function TrashPage() {
     }
   }
 
+  function toggleSelectMode() {
+    setSelectMode((prev) => !prev)
+    setSelectedIds(new Set())
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function selectAllBills() {
+    setSelectedIds(new Set(bills.map((b) => b.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  async function handleBulkRestore() {
+    if (selectedIds.size === 0) return
+    const confirmed = window.confirm(`Restore ${selectedIds.size} selected bill(s)?`)
+    if (!confirmed) return
+
+    setBulkWorking(true)
+    try {
+      await bulkRestoreBills(token, Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setSelectMode(false)
+      await load(token)
+    } catch (err) {
+      console.error(err)
+      alert('Could not restore selected bills.')
+    } finally {
+      setBulkWorking(false)
+    }
+  }
+
+  async function handleBulkPermanentDelete() {
+    if (selectedIds.size === 0) return
+    const confirmed = window.confirm(
+      `Permanently delete ${selectedIds.size} selected bill(s)? This cannot be undone.`
+    )
+    if (!confirmed) return
+
+    setBulkWorking(true)
+    try {
+      await bulkPermanentlyDeleteBills(token, Array.from(selectedIds))
+      setSelectedIds(new Set())
+      setSelectMode(false)
+      await load(token)
+    } catch (err) {
+      console.error(err)
+      alert('Could not permanently delete selected bills.')
+    } finally {
+      setBulkWorking(false)
+    }
+  }
+
   if (!token) {
     return <AdminLogin onSuccess={handleLoginSuccess} />
   }
+
+  const allSelected = bills.length > 0 && selectedIds.size === bills.length
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
         <h1>Trash ({bills.length})</h1>
         <div className="dashboard-actions">
-          <button className="btn-refresh" onClick={() => load(token)}>Refresh</button>
-          <button className="btn-refresh" onClick={handleLogout}>Log out</button>
+          {!selectMode && (
+            <>
+              <button className="btn-refresh" onClick={() => load(token)}>Refresh</button>
+              <button className="btn-refresh" onClick={toggleSelectMode}>Select</button>
+              <button className="btn-refresh" onClick={handleLogout}>Log out</button>
+            </>
+          )}
         </div>
       </div>
+
+      {selectMode && (
+        <div className="bulk-actions-bar">
+          <span>{selectedIds.size} selected</span>
+          <div className="bulk-actions-buttons">
+            <button
+              className="btn-icon-text"
+              onClick={() => (allSelected ? clearSelection() : selectAllBills())}
+              disabled={bulkWorking || bills.length === 0}
+            >
+              {allSelected ? 'Unselect all' : `Select all (${bills.length})`}
+            </button>
+            <button
+              className="btn-icon-text"
+              onClick={handleBulkRestore}
+              disabled={selectedIds.size === 0 || bulkWorking}
+            >
+              {bulkWorking ? 'Working...' : `Restore selected (${selectedIds.size})`}
+            </button>
+            <button
+              className="btn-icon-text danger"
+              onClick={handleBulkPermanentDelete}
+              disabled={selectedIds.size === 0 || bulkWorking}
+            >
+              {bulkWorking ? 'Working...' : `Delete selected permanently (${selectedIds.size})`}
+            </button>
+            <button className="btn-icon-text" onClick={toggleSelectMode} disabled={bulkWorking}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <p className="msg">Deleted bills stay here until permanently deleted. Restoring brings them back to the dashboard.</p>
 
@@ -89,11 +199,29 @@ export default function TrashPage() {
       {status === 'ready' && bills.length > 0 && (
         <div className="bill-grid">
           {bills.map((bill) => (
-            <div className="bill-card" key={bill.id}>
+            <div
+              className={`bill-card${selectMode ? ' bill-card-selectable' : ''}${selectedIds.has(bill.id) ? ' bill-card-selected' : ''}`}
+              key={bill.id}
+              onClick={() => { if (selectMode) toggleSelect(bill.id) }}
+            >
+              {selectMode && (
+                <div className="bill-select-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(bill.id)}
+                    onChange={() => toggleSelect(bill.id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                </div>
+              )}
+
               <button
                 type="button"
                 className="bill-photo-btn"
-                onClick={() => window.open(bill.photo_url, '_blank')}
+                onClick={(e) => {
+                  if (selectMode) { e.stopPropagation(); return }
+                  window.open(bill.photo_url, '_blank')
+                }}
               >
                 <img src={bill.photo_url} alt={`Bill by ${bill.employee_name}`} />
               </button>
@@ -104,12 +232,14 @@ export default function TrashPage() {
                 <span className="bill-date">
                   Deleted: {bill.deleted_at ? new Date(bill.deleted_at).toLocaleString() : ''}
                 </span>
-                <div className="bill-card-actions">
-                  <button className="btn-icon-text" onClick={() => handleRestore(bill.id)}>Restore</button>
-                  <button className="btn-icon-text danger" onClick={() => handlePermanentDelete(bill.id)}>
-                    Delete permanently
-                  </button>
-                </div>
+                {!selectMode && (
+                  <div className="bill-card-actions">
+                    <button className="btn-icon-text" onClick={() => handleRestore(bill.id)}>Restore</button>
+                    <button className="btn-icon-text danger" onClick={() => handlePermanentDelete(bill.id)}>
+                      Delete permanently
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

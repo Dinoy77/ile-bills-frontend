@@ -217,3 +217,33 @@ export async function permanentlyDeleteBill(token, billId) {
   if (!res.ok) throw new Error(`Permanent delete failed: ${res.status}`)
   return res.json()
 }
+
+// Restores multiple trashed bills at once. Admin only.
+export async function bulkRestoreBills(token, ids) {
+  const res = await fetch(`${API_URL}/admin/trash/bulk-restore`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ids }),
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Bulk restore failed: ${res.status}`)
+  return res.json()
+}
+
+// Permanently deletes multiple trashed bills (and their photos) at once. Admin only.
+export async function bulkPermanentlyDeleteBills(token, ids) {
+  const res = await fetch(`${API_URL}/admin/trash/bulk-delete`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ ids }),
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Bulk permanent delete failed: ${res.status}`)
+  return res.json()
+}
