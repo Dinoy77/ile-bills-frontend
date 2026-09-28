@@ -9,6 +9,8 @@ export default function DashboardPage() {
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY))
   const [bills, setBills] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const [status, setStatus] = useState('loading')
   const [openGroups, setOpenGroups] = useState({})
   const [selectMode, setSelectMode] = useState(false)
@@ -84,6 +86,11 @@ export default function DashboardPage() {
     setSelectedIds(new Set())
   }
 
+  function clearDateFilter() {
+    setFromDate('')
+    setToDate('')
+  }
+
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return
     const confirmed = window.confirm(
@@ -109,9 +116,25 @@ export default function DashboardPage() {
     return <AdminLogin onSuccess={handleLoginSuccess} />
   }
 
-  const filtered = bills.filter((b) =>
+  const searched = bills.filter((b) =>
     b.employee_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const filtered = searched.filter((b) => {
+    if (!fromDate && !toDate) return true
+    if (!b.created_at) return false
+    const billDate = new Date(b.created_at)
+
+    if (fromDate) {
+      const start = new Date(fromDate + 'T00:00:00')
+      if (billDate < start) return false
+    }
+    if (toDate) {
+      const end = new Date(toDate + 'T23:59:59')
+      if (billDate > end) return false
+    }
+    return true
+  })
 
   const totalAmount = bills.reduce((sum, b) => sum + (b.bill_amount || 0), 0)
   const now = new Date()
@@ -196,13 +219,39 @@ export default function DashboardPage() {
       )}
 
       {!selectMode && (
-        <input
-          type="text"
-          placeholder="Search by employee name..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="search-input"
-        />
+        <>
+          <input
+            type="text"
+            placeholder="Search by employee name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
+
+          <div className="date-filter-row">
+            <label className="date-filter-field">
+              From
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </label>
+            <label className="date-filter-field">
+              To
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </label>
+            {(fromDate || toDate) && (
+              <button type="button" className="btn-icon-text" onClick={clearDateFilter}>
+                Clear dates
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       {status === 'loading' && <p className="msg">Loading bills...</p>}
