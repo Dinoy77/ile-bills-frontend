@@ -141,6 +141,7 @@ export default function UploadPage() {
             <option value="Credit">Credit</option>
             <option value="Account">Account</option>
             <option value="UPI">UPI</option>
+            <option value="Card">Card</option>
           </select>
         </label>
 
