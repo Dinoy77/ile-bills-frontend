@@ -76,6 +76,14 @@ export default function DashboardPage() {
     })
   }
 
+  function selectAllBills(allBills) {
+    setSelectedIds(new Set(allBills.map((b) => b.id)))
+  }
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
   async function handleBulkDelete() {
     if (selectedIds.size === 0) return
     const confirmed = window.confirm(
@@ -128,6 +136,8 @@ export default function DashboardPage() {
     groups[a].displayName.localeCompare(groups[b].displayName)
   )
 
+  const allSelected = filtered.length > 0 && selectedIds.size === filtered.length
+
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
@@ -147,6 +157,13 @@ export default function DashboardPage() {
         <div className="bulk-actions-bar">
           <span>{selectedIds.size} selected</span>
           <div className="bulk-actions-buttons">
+            <button
+              className="btn-icon-text"
+              onClick={() => (allSelected ? clearSelection() : selectAllBills(filtered))}
+              disabled={bulkDeleting || filtered.length === 0}
+            >
+              {allSelected ? 'Unselect all' : `Select all (${filtered.length})`}
+            </button>
             <button
               className="btn-icon-text danger"
               onClick={handleBulkDelete}
