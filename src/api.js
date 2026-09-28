@@ -126,6 +126,24 @@ export async function fetchMyBills(token) {
   return res.json()
 }
 
+export async function updateMyBill(token, billId, { customerName, billAmount, paymentMethod }) {
+  const res = await fetch(`${API_URL}/my-bills/${billId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      customer_name: customerName,
+      bill_amount: billAmount === '' || billAmount == null ? null : Number(billAmount),
+      payment_method: paymentMethod,
+    }),
+  })
+  if (res.status === 401) throw new Error('UNAUTHORIZED')
+  if (!res.ok) throw new Error(`Update failed: ${res.status}`)
+  return res.json()
+}
+
 export async function deleteMyBill(token, billId) {
   const res = await fetch(`${API_URL}/my-bills/${billId}`, {
     method: 'DELETE',
