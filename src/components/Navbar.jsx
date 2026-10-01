@@ -23,7 +23,7 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <span className="brand">Rahul Tiles</span>
+      <span className="brand">Club CR7</span>
       <div className="nav-links">
         {isAdmin && (
           <>
